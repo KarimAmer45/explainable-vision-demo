@@ -4,7 +4,7 @@ An end-to-end computer vision demo for image classification with explainability.
 
 The included sample dataset generator creates a tiny synthetic surface-inspection dataset so the full workflow can run without external data. The same training and evaluation code also works with any ImageFolder-style dataset.
 
-## Result Screenshots
+## Training output
 
 ![Training metrics](docs/screenshots/training_metrics.png)
 
@@ -12,7 +12,7 @@ The included sample dataset generator creates a tiny synthetic surface-inspectio
 
 ![Streamlit UI](docs/screenshots/streamlit_ui.png)
 
-## What This Demonstrates
+## Explainability workflow
 
 - Reproducible image dataset discovery and stratified `train` / `val` / `test` splitting.
 - ResNet18 or EfficientNet-B0 classification heads for transfer learning or scratch training.
@@ -105,7 +105,7 @@ The evaluator reports:
 - `macro_auc_ovr`: macro one-vs-rest ROC-AUC for multi-class classification.
 - `macro_average_precision`: macro average precision. This is the classification analogue of mAP and is useful when comparing ranked confidence scores.
 
-## Limitations And Next Steps
+## Dataset limitations
 
 - The bundled dataset is intentionally synthetic and small; use a real domain dataset before drawing product conclusions.
 - GradCAM is a localization aid, not a proof of causal reasoning.
