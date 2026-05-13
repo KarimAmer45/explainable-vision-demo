@@ -6,9 +6,10 @@ from pathlib import Path
 from time import perf_counter
 
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageOps
 import torch
 import torch.nn as nn
+from sklearn.datasets import load_sample_image
 from sklearn.model_selection import train_test_split
 from torch.optim import AdamW
 from torch.utils.data import DataLoader, Dataset
@@ -191,21 +192,40 @@ def save_rollout_card(
     true_class: str,
     predicted_class: str,
     confidence: float,
+    subtitle: str | None = None,
 ) -> None:
-    canvas = Image.new("RGB", (1180, 640), "#080b0e")
+    panel_size = (500, 360)
+    image_top = 136
+    canvas = Image.new("RGB", (1180, 540), "#080b0e")
     draw = ImageDraw.Draw(canvas)
     draw.text((42, 34), "ViT attention rollout", fill="#55d7c2")
-    draw.text((42, 72), f"{true_class} -> {predicted_class} ({confidence:.1%})", fill="#f4f7fb")
+    if subtitle is None:
+        subtitle = f"{true_class} -> {predicted_class} ({confidence:.1%})"
+    draw.text((42, 72), subtitle, fill="#f4f7fb")
     draw.text((42, 108), "Original", fill="#d7dee8")
     draw.text((620, 108), "Attention overlay", fill="#d7dee8")
 
-    original = image.resize((500, 500), Image.Resampling.BICUBIC)
-    rollout = overlay.resize((500, 500), Image.Resampling.BICUBIC)
-    canvas.paste(original, (42, 136))
-    canvas.paste(rollout, (620, 136))
-    draw.rounded_rectangle((42, 136, 542, 636), radius=8, outline="#2c353d", width=2)
-    draw.rounded_rectangle((620, 136, 1120, 636), radius=8, outline="#55d7c2", width=2)
+    original = ImageOps.contain(image, panel_size, Image.Resampling.BICUBIC)
+    rollout = ImageOps.contain(overlay, panel_size, Image.Resampling.BICUBIC)
+    original_position = (
+        42 + (panel_size[0] - original.width) // 2,
+        image_top + (panel_size[1] - original.height) // 2,
+    )
+    rollout_position = (
+        620 + (panel_size[0] - rollout.width) // 2,
+        image_top + (panel_size[1] - rollout.height) // 2,
+    )
+    canvas.paste(original, original_position)
+    canvas.paste(rollout, rollout_position)
+    draw.rounded_rectangle((42, image_top, 542, 496), radius=8, outline="#2c353d", width=2)
+    draw.rounded_rectangle((620, image_top, 1120, 496), radius=8, outline="#55d7c2", width=2)
     canvas.save(output_path)
+
+
+def upsample_heatmap(heatmap: np.ndarray, size: tuple[int, int]) -> np.ndarray:
+    heatmap_image = Image.fromarray(np.uint8(np.clip(heatmap, 0.0, 1.0) * 255))
+    heatmap_image = heatmap_image.resize(size, Image.Resampling.BILINEAR)
+    return np.asarray(heatmap_image).astype(np.float32) / 255.0
 
 
 def save_attention_rollout_example(
@@ -258,6 +278,29 @@ def save_attention_rollout_example(
     )
 
 
+def save_attention_rollout_reference(
+    model: nn.Module,
+    output_path: Path,
+    image_size: int,
+    device: torch.device,
+    discard_ratio: float,
+) -> None:
+    image = Image.fromarray(load_sample_image("flower.jpg")).convert("RGB")
+    transform = build_transforms(image_size=image_size, train=False)
+    image_tensor = transform(image).unsqueeze(0).to(device)
+    heatmap = attention_rollout_heatmap(model, image_tensor, discard_ratio=discard_ratio)
+    overlay = overlay_heatmap(image, upsample_heatmap(heatmap, image.size), alpha=0.34)
+    save_rollout_card(
+        image=image,
+        overlay=overlay,
+        output_path=output_path,
+        true_class="reference image",
+        predicted_class="ViT attention",
+        confidence=1.0,
+        subtitle="High-resolution reference -> ViT attention rollout",
+    )
+
+
 def save_experiment_card(
     output_dir: Path,
     args: argparse.Namespace,
@@ -290,7 +333,8 @@ def save_experiment_card(
 
 ViT checkpoints export `attention_rollout_example.png`, which averages attention heads,
 adds the residual identity path, rolls attention through the transformer stack, and
-projects class-token attention back to image space.
+projects class-token attention back to image space. A second reference card uses a
+larger sample image so the visual proof is not limited by CIFAR-10 resolution.
 
 ## Artifacts
 
@@ -299,6 +343,7 @@ projects class-token attention back to image space.
 - `test_metrics.json`
 - `training_curves.png`
 - `attention_rollout_example.png` for ViT runs
+- `attention_rollout_reference.png` for ViT runs
 """
     (output_dir / "experiment_card.md").write_text(card, encoding="utf-8")
 
@@ -409,6 +454,13 @@ def main() -> None:
             test_indices=split_indices["test"],
             label_map=label_map,
             class_names=class_names,
+            device=device,
+            discard_ratio=args.attention_discard_ratio,
+        )
+        save_attention_rollout_reference(
+            model=model,
+            output_path=output_dir / "attention_rollout_reference.png",
+            image_size=args.image_size,
             device=device,
             discard_ratio=args.attention_discard_ratio,
         )

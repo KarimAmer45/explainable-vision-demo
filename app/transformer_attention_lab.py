@@ -242,6 +242,9 @@ history = read_json(run_dir / "metrics_history.json")
 classes = read_json(run_dir / "classes.json")
 config = read_json(run_dir / "run_config.json") if (run_dir / "run_config.json").exists() else {}
 checkpoint = run_dir / "best_model.pt"
+attention_path = run_dir / "attention_rollout_reference.png"
+if not attention_path.exists():
+    attention_path = run_dir / "attention_rollout_example.png"
 
 with st.container(border=True):
     st.markdown('<div class="vision-panel-title">Test Metrics</div>', unsafe_allow_html=True)
@@ -255,29 +258,28 @@ with st.container(border=True):
         unsafe_allow_html=True,
     )
 
-left, right = st.columns([1, 1], gap="large")
+with st.container(border=True):
+    st.subheader("Attention Rollout")
+    st.image(Image.open(attention_path), use_container_width=True)
+
+left, right = st.columns([0.48, 0.52], gap="large")
 with left:
-    with st.container(border=True):
-        st.subheader("Attention Rollout")
-        st.image(Image.open(run_dir / "attention_rollout_example.png"), use_container_width=True)
-with right:
     with st.container(border=True):
         st.subheader("Training Curve")
         st.image(Image.open(run_dir / "training_curves.png"), use_container_width=True)
 
-detail_col, class_col = st.columns([0.48, 0.52], gap="large")
-with detail_col:
+with right:
     with st.container(border=True):
         st.subheader("Run Provenance")
         st.markdown(f"**Architecture:** `{config.get('arch', 'vit_b_16')}`")
         st.markdown(f"**Pretrained:** `{config.get('pretrained', True)}`")
         st.markdown(f"**Frozen backbone:** `{config.get('freeze_backbone', True)}`")
         st.markdown(f"**Checkpoint:** `{checkpoint.name}` ({checkpoint.stat().st_size / 1_000_000:.1f} MB)")
-with class_col:
-    with st.container(border=True):
-        st.subheader("Classes")
-        class_table = pd.DataFrame({"index": range(len(classes)), "class": classes})
-        st.dataframe(class_table, use_container_width=True, hide_index=True)
+
+with st.container(border=True):
+    st.subheader("Classes")
+    class_table = pd.DataFrame({"index": range(len(classes)), "class": classes})
+    st.dataframe(class_table, use_container_width=True, hide_index=True)
 
 if history:
     with st.container(border=True):
