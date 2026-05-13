@@ -14,12 +14,12 @@ from torch.optim import AdamW
 from torch.utils.data import DataLoader, Dataset
 from torchvision import datasets
 
-from xai_vision_demo.data import build_transforms
-from xai_vision_demo.explain import overlay_heatmap
-from xai_vision_demo.metrics import classification_metrics
-from xai_vision_demo.model import create_model, freeze_backbone, is_vit_arch
-from xai_vision_demo.train import run_epoch, save_training_plot, set_seed
-from xai_vision_demo.transformer_explain import attention_rollout_heatmap
+from vision_demo.data import build_transforms
+from vision_demo.explain import overlay_heatmap
+from vision_demo.metrics import classification_metrics
+from vision_demo.model import create_model, freeze_backbone, is_vit_arch
+from vision_demo.train import run_epoch, save_training_plot, set_seed
+from vision_demo.transformer_explain import attention_rollout_heatmap
 
 
 class CifarSubsetWithIds(Dataset):
@@ -46,7 +46,7 @@ class CifarSubsetWithIds(Dataset):
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Fine-tune a ViT/Swin classifier on CIFAR-10 and export transformer XAI assets."
+        description="Fine-tune a ViT/Swin classifier on CIFAR-10 and export transformer explainability assets."
     )
     parser.add_argument("--output-dir", default="runs/cifar10_vit_b_16")
     parser.add_argument("--data-dir", default="data/public")

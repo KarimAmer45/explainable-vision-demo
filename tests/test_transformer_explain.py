@@ -2,7 +2,7 @@ import numpy as np
 import torch
 from torchvision.models.vision_transformer import VisionTransformer
 
-from xai_vision_demo.transformer_explain import attention_rollout_heatmap
+from vision_demo.transformer_explain import attention_rollout_heatmap
 
 
 def test_attention_rollout_returns_normalized_image_sized_heatmap():

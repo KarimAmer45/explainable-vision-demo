@@ -4,7 +4,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-from xai_vision_demo.explain import GradCAM, overlay_heatmap
+from vision_demo.explain import GradCAM, overlay_heatmap
 
 
 class TinyCamModel(nn.Module):

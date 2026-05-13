@@ -14,7 +14,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from xai_vision_demo.explain import GradCAM, overlay_heatmap  # noqa: E402
+from vision_demo.explain import GradCAM, overlay_heatmap  # noqa: E402
 
 
 st.set_page_config(
@@ -27,15 +27,15 @@ st.markdown(
     """
     <style>
     :root {
-        --xai-bg: #080b0e;
-        --xai-panel: rgba(18, 23, 29, 0.78);
-        --xai-panel-strong: rgba(22, 29, 36, 0.92);
-        --xai-border: rgba(233, 238, 245, 0.12);
-        --xai-border-strong: rgba(84, 206, 188, 0.38);
-        --xai-text: #f4f7fb;
-        --xai-muted: rgba(229, 235, 243, 0.68);
-        --xai-teal: #55d7c2;
-        --xai-amber: #f2bd6b;
+        --vision-bg: #080b0e;
+        --vision-panel: rgba(18, 23, 29, 0.78);
+        --vision-panel-strong: rgba(22, 29, 36, 0.92);
+        --vision-border: rgba(233, 238, 245, 0.12);
+        --vision-border-strong: rgba(84, 206, 188, 0.38);
+        --vision-text: #f4f7fb;
+        --vision-muted: rgba(229, 235, 243, 0.68);
+        --vision-teal: #55d7c2;
+        --vision-amber: #f2bd6b;
     }
     html, body, [class*="css"] {
         font-family:
@@ -50,10 +50,10 @@ st.markdown(
         background:
             linear-gradient(145deg, rgba(28, 39, 46, 0.78), rgba(8, 11, 14, 0.98) 38%),
             linear-gradient(180deg, rgba(242, 189, 107, 0.045), rgba(85, 215, 194, 0.025) 48%, transparent),
-            var(--xai-bg);
+            var(--vision-bg);
     }
     h1 {
-        color: var(--xai-text) !important;
+        color: var(--vision-text) !important;
         font-size: 2.6rem !important;
         font-weight: 760 !important;
         line-height: 1.04 !important;
@@ -61,21 +61,21 @@ st.markdown(
         margin-bottom: 0.45rem !important;
     }
     h2, h3 {
-        color: var(--xai-text) !important;
+        color: var(--vision-text) !important;
         font-weight: 720 !important;
         letter-spacing: 0 !important;
     }
     [data-testid="stVerticalBlockBorderWrapper"] {
         background:
             linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018)),
-            var(--xai-panel);
-        border: 1px solid var(--xai-border);
+            var(--vision-panel);
+        border: 1px solid var(--vision-border);
         border-radius: 8px;
         box-shadow: 0 18px 45px rgba(0, 0, 0, 0.22);
     }
     div[data-testid="stFileUploader"] section {
         min-height: 150px;
-        border: 1px dashed var(--xai-border-strong);
+        border: 1px dashed var(--vision-border-strong);
         border-radius: 8px;
         background:
             linear-gradient(135deg, rgba(85, 215, 194, 0.08), rgba(242, 189, 107, 0.035)),
@@ -91,12 +91,12 @@ st.markdown(
         font-weight: 700;
     }
     div[data-testid="stFileUploader"] button:hover {
-        border-color: var(--xai-teal);
-        color: var(--xai-text);
+        border-color: var(--vision-teal);
+        color: var(--vision-text);
     }
     div[data-testid="stSlider"] [role="slider"] {
-        background: var(--xai-teal);
-        border-color: var(--xai-teal);
+        background: var(--vision-teal);
+        border-color: var(--vision-teal);
         box-shadow: 0 0 0 4px rgba(85, 215, 194, 0.14);
     }
     div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
@@ -105,33 +105,33 @@ st.markdown(
         border-radius: 7px;
     }
     div[data-testid="stProgress"] > div > div {
-        background: linear-gradient(90deg, var(--xai-teal), var(--xai-amber));
+        background: linear-gradient(90deg, var(--vision-teal), var(--vision-amber));
     }
     div[data-testid="stImage"] img {
         border-radius: 7px;
     }
-    .xai-kicker {
-        color: var(--xai-teal);
+    .vision-kicker {
+        color: var(--vision-teal);
         font-size: 0.78rem;
         font-weight: 760;
         letter-spacing: 0;
         text-transform: uppercase;
         margin-bottom: 0.4rem;
     }
-    .xai-subtitle {
-        color: var(--xai-muted);
+    .vision-subtitle {
+        color: var(--vision-muted);
         font-size: 1.02rem;
         line-height: 1.56;
         margin-bottom: 1.2rem;
         max-width: 680px;
     }
-    .xai-pill-row {
+    .vision-pill-row {
         display: flex;
         flex-wrap: wrap;
         gap: 0.5rem;
         margin: 0.85rem 0 1.25rem;
     }
-    .xai-pill {
+    .vision-pill {
         border: 1px solid rgba(233, 238, 245, 0.16);
         border-radius: 999px;
         color: rgba(244, 247, 251, 0.9);
@@ -140,17 +140,17 @@ st.markdown(
         font-size: 0.82rem;
         font-weight: 650;
     }
-    .xai-panel-title {
-        color: var(--xai-text);
+    .vision-panel-title {
+        color: var(--vision-text);
         font-size: 0.98rem;
         font-weight: 760;
         margin-bottom: 0.45rem;
     }
-    .xai-empty {
-        border: 1px solid var(--xai-border);
+    .vision-empty {
+        border: 1px solid var(--vision-border);
         border-radius: 8px;
         padding: 1.2rem;
-        color: var(--xai-muted);
+        color: var(--vision-muted);
         background: rgba(244, 247, 251, 0.035);
     }
     </style>
@@ -225,19 +225,19 @@ def sample_image_file() -> BytesIO:
     return buffer
 
 
-st.markdown('<div class="xai-kicker">Explainable vision demo</div>', unsafe_allow_html=True)
+st.markdown('<div class="vision-kicker">Explainable vision demo</div>', unsafe_allow_html=True)
 st.title("GradCAM Image Inspector")
 st.markdown(
-    '<div class="xai-subtitle">A focused model-attention workspace for quick ImageNet '
+    '<div class="vision-subtitle">A focused model-attention workspace for quick ImageNet '
     "classification checks and GradCAM review.</div>",
     unsafe_allow_html=True,
 )
 st.markdown(
     """
-    <div class="xai-pill-row">
-        <span class="xai-pill">ResNet18</span>
-        <span class="xai-pill">ImageNet</span>
-        <span class="xai-pill">GradCAM</span>
+    <div class="vision-pill-row">
+        <span class="vision-pill">ResNet18</span>
+        <span class="vision-pill">ImageNet</span>
+        <span class="vision-pill">GradCAM</span>
     </div>
     """,
     unsafe_allow_html=True,
@@ -246,7 +246,7 @@ st.markdown(
 upload_col, filter_col = st.columns([0.62, 0.38], gap="large", vertical_alignment="top")
 with upload_col:
     with st.container(border=True):
-        st.markdown('<div class="xai-panel-title">Image</div>', unsafe_allow_html=True)
+        st.markdown('<div class="vision-panel-title">Image</div>', unsafe_allow_html=True)
         uploaded = st.file_uploader(
             "Upload image",
             type=["jpg", "jpeg", "png", "webp"],
@@ -257,7 +257,7 @@ with upload_col:
 
 with filter_col:
     with st.container(border=True):
-        st.markdown('<div class="xai-panel-title">Filters</div>', unsafe_allow_html=True)
+        st.markdown('<div class="vision-panel-title">Filters</div>', unsafe_allow_html=True)
         top_k = st.slider("Top predictions", min_value=3, max_value=10, value=5)
         heatmap_alpha = st.slider("Heatmap opacity", min_value=0.15, max_value=0.75, value=0.42)
         target_slot = st.empty()
@@ -265,7 +265,7 @@ with filter_col:
 if uploaded is None:
     if not st.session_state.get("use_sample_image", False):
         st.markdown(
-            '<div class="xai-empty">Waiting for an image.</div>',
+            '<div class="vision-empty">Waiting for an image.</div>',
             unsafe_allow_html=True,
         )
         st.stop()

@@ -15,15 +15,15 @@ import torch.nn as nn
 from torch.optim import AdamW
 from tqdm import tqdm
 
-from xai_vision_demo.data import (
+from vision_demo.data import (
     class_names_from_records,
     discover_imagefolder,
     make_dataloaders,
     stratified_split,
     write_split_csv,
 )
-from xai_vision_demo.metrics import classification_metrics
-from xai_vision_demo.model import SUPPORTED_ARCHITECTURES, create_model, freeze_backbone
+from vision_demo.metrics import classification_metrics
+from vision_demo.model import SUPPORTED_ARCHITECTURES, create_model, freeze_backbone
 
 
 def parse_args() -> argparse.Namespace:

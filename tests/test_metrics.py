@@ -1,6 +1,6 @@
 import numpy as np
 
-from xai_vision_demo.metrics import classification_metrics
+from vision_demo.metrics import classification_metrics
 
 
 def test_classification_metrics_multiclass_are_bounded():

@@ -12,9 +12,9 @@ from PIL import Image
 import torch
 import torch.nn.functional as F
 
-from xai_vision_demo.data import build_transforms
-from xai_vision_demo.model import create_model, gradcam_target_layer, is_vit_arch
-from xai_vision_demo.transformer_explain import attention_rollout_heatmap
+from vision_demo.data import build_transforms
+from vision_demo.model import create_model, gradcam_target_layer, is_vit_arch
+from vision_demo.transformer_explain import attention_rollout_heatmap
 
 
 class GradCAM:

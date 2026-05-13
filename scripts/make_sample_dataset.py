@@ -76,7 +76,7 @@ def make_image(class_name: str, rng: np.random.Generator, image_size: int) -> Im
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Generate a tiny synthetic surface-inspection dataset.")
+    parser = argparse.ArgumentParser(description="Create a tiny sample surface-inspection dataset.")
     parser.add_argument("--output", required=True)
     parser.add_argument("--images-per-class", type=int, default=80)
     parser.add_argument("--image-size", type=int, default=224)

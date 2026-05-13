@@ -2,7 +2,7 @@
 
 An end-to-end computer vision demo for image classification with explainability. The repo uses transfer-learning-ready CNN and transformer pipelines, reproducible dataset splits, accuracy/AUC/classification average precision, GradCAM and ViT attention-rollout visualizations, and a small Streamlit UI for interactive inference.
 
-The included sample dataset generator creates a tiny synthetic surface-inspection dataset so the full workflow can run without external data. The same training and evaluation code also works with any ImageFolder-style dataset.
+The included sample dataset script builds a tiny illustrative surface-inspection dataset so the full workflow can run without external data. The same training and evaluation code also works with any ImageFolder-style dataset.
 
 ## Result Screenshots
 
@@ -54,7 +54,7 @@ python scripts/make_sample_dataset.py --output data/surface_inspection --images-
 Train a classifier:
 
 ```bash
-python -m xai_vision_demo.train \
+python -m vision_demo.train \
   --data-dir data/surface_inspection \
   --output-dir runs/surface_resnet18 \
   --arch resnet18 \
@@ -68,7 +68,7 @@ To fine-tune from ImageNet weights, add `--pretrained`. That may download torchv
 Evaluate the test split:
 
 ```bash
-python -m xai_vision_demo.evaluate \
+python -m vision_demo.evaluate \
   --checkpoint runs/surface_resnet18/best_model.pt \
   --split-csv runs/surface_resnet18/splits.csv \
   --output-dir runs/surface_resnet18/eval
@@ -77,7 +77,7 @@ python -m xai_vision_demo.evaluate \
 Create a GradCAM overlay for one image:
 
 ```bash
-python -m xai_vision_demo.explain \
+python -m vision_demo.explain \
   --checkpoint runs/surface_resnet18/best_model.pt \
   --image data/surface_inspection/crack/crack_0001.jpg \
   --output runs/surface_resnet18/gradcam_crack.png
@@ -92,7 +92,7 @@ streamlit run app/streamlit_app.py
 Run a small public-dataset transformer experiment:
 
 ```bash
-python -m xai_vision_demo.transformer_experiment \
+python -m vision_demo.transformer_experiment \
   --arch vit_b_16 \
   --classes airplane ship \
   --output-dir runs/cifar10_vit_airship \
@@ -170,7 +170,7 @@ The evaluator reports:
 
 ## Transformer Experiment
 
-The `xai_vision_demo.transformer_experiment` module is a compact public-dataset run for
+The `vision_demo.transformer_experiment` module is a compact public-dataset run for
 showing the repo is not limited to CNN GradCAM. It uses CIFAR-10 as a reproducible public
 dataset, supports `vit_b_16` and `swin_t`, and can be scoped to focused class pairs such
 as airplane-vs-ship for a crisp, high-signal portfolio demo. The ViT path exports an attention-rollout overlay so
@@ -180,7 +180,7 @@ those artifacts as a reviewer-friendly experiment report.
 
 ## Limitations And Next Steps
 
-- The bundled dataset is intentionally synthetic and small; use a real domain dataset before drawing product conclusions.
+- The bundled dataset is intentionally small and illustrative; use a real domain dataset before drawing product conclusions.
 - GradCAM is a localization aid, not a proof of causal reasoning.
 - ViT attention rollout is attention-based attribution, not Shapley-value attribution; it is useful for inspection but should be paired with quantitative error analysis.
 - Object detection is a natural next extension, but it is intentionally out of scope for this version. A YOLO or RT-DETR path would need bounding-box labels, detection metrics, and its own explanation workflow.

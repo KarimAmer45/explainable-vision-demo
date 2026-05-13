@@ -9,9 +9,9 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
-from xai_vision_demo.data import make_dataloaders, read_split_csv
-from xai_vision_demo.metrics import classification_metrics, plot_confusion_matrix, plot_roc_curves
-from xai_vision_demo.model import create_model
+from vision_demo.data import make_dataloaders, read_split_csv
+from vision_demo.metrics import classification_metrics, plot_confusion_matrix, plot_roc_curves
+from vision_demo.model import create_model
 
 
 def parse_args() -> argparse.Namespace:

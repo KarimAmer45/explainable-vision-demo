@@ -19,14 +19,14 @@ st.markdown(
     """
     <style>
     :root {
-        --xai-bg: #080b0e;
-        --xai-panel: rgba(18, 23, 29, 0.78);
-        --xai-border: rgba(233, 238, 245, 0.12);
-        --xai-border-strong: rgba(84, 206, 188, 0.38);
-        --xai-text: #f4f7fb;
-        --xai-muted: rgba(229, 235, 243, 0.68);
-        --xai-teal: #55d7c2;
-        --xai-amber: #f2bd6b;
+        --vision-bg: #080b0e;
+        --vision-panel: rgba(18, 23, 29, 0.78);
+        --vision-border: rgba(233, 238, 245, 0.12);
+        --vision-border-strong: rgba(84, 206, 188, 0.38);
+        --vision-text: #f4f7fb;
+        --vision-muted: rgba(229, 235, 243, 0.68);
+        --vision-teal: #55d7c2;
+        --vision-amber: #f2bd6b;
     }
     html, body, [class*="css"] {
         font-family:
@@ -46,10 +46,10 @@ st.markdown(
                 rgba(85, 215, 194, 0.025) 48%,
                 transparent
             ),
-            var(--xai-bg);
+            var(--vision-bg);
     }
     h1 {
-        color: var(--xai-text) !important;
+        color: var(--vision-text) !important;
         font-size: 2.6rem !important;
         font-weight: 760 !important;
         line-height: 1.04 !important;
@@ -57,15 +57,15 @@ st.markdown(
         margin-bottom: 0.45rem !important;
     }
     h2, h3 {
-        color: var(--xai-text) !important;
+        color: var(--vision-text) !important;
         font-weight: 720 !important;
         letter-spacing: 0 !important;
     }
     [data-testid="stVerticalBlockBorderWrapper"] {
         background:
             linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018)),
-            var(--xai-panel);
-        border: 1px solid var(--xai-border);
+            var(--vision-panel);
+        border: 1px solid var(--vision-border);
         border-radius: 8px;
         box-shadow: 0 18px 45px rgba(0, 0, 0, 0.22);
     }
@@ -73,33 +73,33 @@ st.markdown(
         background: rgba(7, 11, 15, 0.78);
         border-color: rgba(233, 238, 245, 0.14);
         border-radius: 7px;
-        color: var(--xai-text);
+        color: var(--vision-text);
     }
     div[data-testid="stImage"] img {
         border-radius: 7px;
     }
-    .xai-kicker {
-        color: var(--xai-teal);
+    .vision-kicker {
+        color: var(--vision-teal);
         font-size: 0.78rem;
         font-weight: 760;
         letter-spacing: 0;
         text-transform: uppercase;
         margin-bottom: 0.4rem;
     }
-    .xai-subtitle {
-        color: var(--xai-muted);
+    .vision-subtitle {
+        color: var(--vision-muted);
         font-size: 1.02rem;
         line-height: 1.56;
         margin-bottom: 1.2rem;
         max-width: 760px;
     }
-    .xai-pill-row {
+    .vision-pill-row {
         display: flex;
         flex-wrap: wrap;
         gap: 0.5rem;
         margin: 0.85rem 0 1.25rem;
     }
-    .xai-pill {
+    .vision-pill {
         border: 1px solid rgba(233, 238, 245, 0.16);
         border-radius: 999px;
         color: rgba(244, 247, 251, 0.9);
@@ -108,43 +108,43 @@ st.markdown(
         font-size: 0.82rem;
         font-weight: 650;
     }
-    .xai-panel-title {
-        color: var(--xai-text);
+    .vision-panel-title {
+        color: var(--vision-text);
         font-size: 0.98rem;
         font-weight: 760;
         margin-bottom: 0.45rem;
     }
-    .xai-empty {
-        border: 1px solid var(--xai-border);
+    .vision-empty {
+        border: 1px solid var(--vision-border);
         border-radius: 8px;
         padding: 1.2rem;
-        color: var(--xai-muted);
+        color: var(--vision-muted);
         background: rgba(244, 247, 251, 0.035);
     }
-    .xai-metric-grid {
+    .vision-metric-grid {
         display: grid;
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 0.75rem;
         margin-top: 0.8rem;
     }
-    .xai-metric {
+    .vision-metric {
         border: 1px solid rgba(233, 238, 245, 0.12);
         border-radius: 8px;
         background: rgba(7, 11, 15, 0.58);
         padding: 0.85rem 0.95rem;
     }
-    .xai-metric-label {
-        color: var(--xai-muted);
+    .vision-metric-label {
+        color: var(--vision-muted);
         font-size: 0.78rem;
         font-weight: 680;
         margin-bottom: 0.3rem;
     }
-    .xai-metric-value {
-        color: var(--xai-text);
+    .vision-metric-value {
+        color: var(--vision-text);
         font-size: 1.35rem;
         font-weight: 780;
     }
-    .xai-command {
+    .vision-command {
         border: 1px solid rgba(84, 206, 188, 0.28);
         border-radius: 8px;
         color: rgba(244, 247, 251, 0.92);
@@ -171,27 +171,27 @@ def metric_card(label: str, value: float | int | str) -> str:
     else:
         rendered = str(value)
     return (
-        '<div class="xai-metric">'
-        f'<div class="xai-metric-label">{label}</div>'
-        f'<div class="xai-metric-value">{rendered}</div>'
+        '<div class="vision-metric">'
+        f'<div class="vision-metric-label">{label}</div>'
+        f'<div class="vision-metric-value">{rendered}</div>'
         "</div>"
     )
 
 
-st.markdown('<div class="xai-kicker">Transformer experiment</div>', unsafe_allow_html=True)
+st.markdown('<div class="vision-kicker">Transformer experiment</div>', unsafe_allow_html=True)
 st.title("Transformer Attention Lab")
 st.markdown(
-    '<div class="xai-subtitle">A focused model-audit surface for a CIFAR-10 airplane-vs-ship '
+    '<div class="vision-subtitle">A focused model-audit surface for a CIFAR-10 airplane-vs-ship '
     "ViT experiment, with metric cards, run provenance, and a transformer-native attention "
     "rollout artifact.</div>",
     unsafe_allow_html=True,
 )
 st.markdown(
     """
-    <div class="xai-pill-row">
-        <span class="xai-pill">CIFAR-10</span>
-        <span class="xai-pill">Airplane vs ship</span>
-        <span class="xai-pill">Attention rollout</span>
+    <div class="vision-pill-row">
+        <span class="vision-pill">CIFAR-10</span>
+        <span class="vision-pill">Airplane vs ship</span>
+        <span class="vision-pill">Attention rollout</span>
     </div>
     """,
     unsafe_allow_html=True,
@@ -200,17 +200,17 @@ st.markdown(
 control_col, summary_col = st.columns([0.38, 0.62], gap="large", vertical_alignment="top")
 with control_col:
     with st.container(border=True):
-        st.markdown('<div class="xai-panel-title">Run Directory</div>', unsafe_allow_html=True)
+        st.markdown('<div class="vision-panel-title">Run Directory</div>', unsafe_allow_html=True)
         run_dir_text = st.text_input("Run directory", "runs/cifar10_vit_airship")
         run_dir = (ROOT / run_dir_text).resolve()
         st.caption(str(run_dir))
 
 with summary_col:
     with st.container(border=True):
-        st.markdown('<div class="xai-panel-title">Expected Command</div>', unsafe_allow_html=True)
+        st.markdown('<div class="vision-panel-title">Expected Command</div>', unsafe_allow_html=True)
         st.markdown(
             """
-            <div class="xai-command">python -m xai_vision_demo.transformer_experiment ^
+            <div class="vision-command">python -m vision_demo.transformer_experiment ^
   --arch vit_b_16 ^
   --classes airplane ship ^
   --output-dir runs/cifar10_vit_airship ^
@@ -232,7 +232,7 @@ required_files = [
 missing = [name for name in required_files if not (run_dir / name).exists()]
 if missing:
     st.markdown(
-        f'<div class="xai-empty">Missing run artifacts: {", ".join(missing)}.</div>',
+        f'<div class="vision-empty">Missing run artifacts: {", ".join(missing)}.</div>',
         unsafe_allow_html=True,
     )
     st.stop()
@@ -244,9 +244,9 @@ config = read_json(run_dir / "run_config.json") if (run_dir / "run_config.json")
 checkpoint = run_dir / "best_model.pt"
 
 with st.container(border=True):
-    st.markdown('<div class="xai-panel-title">Test Metrics</div>', unsafe_allow_html=True)
+    st.markdown('<div class="vision-panel-title">Test Metrics</div>', unsafe_allow_html=True)
     st.markdown(
-        '<div class="xai-metric-grid">'
+        '<div class="vision-metric-grid">'
         + metric_card("Accuracy", metrics["accuracy"])
         + metric_card("Macro ROC-AUC", metrics["macro_auc_ovr"])
         + metric_card("Macro AP", metrics["macro_average_precision"])

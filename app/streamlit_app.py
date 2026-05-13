@@ -13,10 +13,10 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from xai_vision_demo.data import build_transforms  # noqa: E402
-from xai_vision_demo.explain import GradCAM, overlay_heatmap  # noqa: E402
-from xai_vision_demo.model import create_model, gradcam_target_layer, is_vit_arch  # noqa: E402
-from xai_vision_demo.transformer_explain import attention_rollout_heatmap  # noqa: E402
+from vision_demo.data import build_transforms  # noqa: E402
+from vision_demo.explain import GradCAM, overlay_heatmap  # noqa: E402
+from vision_demo.model import create_model, gradcam_target_layer, is_vit_arch  # noqa: E402
+from vision_demo.transformer_explain import attention_rollout_heatmap  # noqa: E402
 
 
 st.set_page_config(
@@ -29,14 +29,14 @@ st.markdown(
     """
     <style>
     :root {
-        --xai-bg: #080b0e;
-        --xai-panel: rgba(18, 23, 29, 0.78);
-        --xai-border: rgba(233, 238, 245, 0.12);
-        --xai-border-strong: rgba(84, 206, 188, 0.38);
-        --xai-text: #f4f7fb;
-        --xai-muted: rgba(229, 235, 243, 0.68);
-        --xai-teal: #55d7c2;
-        --xai-amber: #f2bd6b;
+        --vision-bg: #080b0e;
+        --vision-panel: rgba(18, 23, 29, 0.78);
+        --vision-border: rgba(233, 238, 245, 0.12);
+        --vision-border-strong: rgba(84, 206, 188, 0.38);
+        --vision-text: #f4f7fb;
+        --vision-muted: rgba(229, 235, 243, 0.68);
+        --vision-teal: #55d7c2;
+        --vision-amber: #f2bd6b;
     }
     html, body, [class*="css"] {
         font-family:
@@ -56,10 +56,10 @@ st.markdown(
                 rgba(85, 215, 194, 0.025) 48%,
                 transparent
             ),
-            var(--xai-bg);
+            var(--vision-bg);
     }
     h1 {
-        color: var(--xai-text) !important;
+        color: var(--vision-text) !important;
         font-size: 2.6rem !important;
         font-weight: 760 !important;
         line-height: 1.04 !important;
@@ -67,21 +67,21 @@ st.markdown(
         margin-bottom: 0.45rem !important;
     }
     h2, h3 {
-        color: var(--xai-text) !important;
+        color: var(--vision-text) !important;
         font-weight: 720 !important;
         letter-spacing: 0 !important;
     }
     [data-testid="stVerticalBlockBorderWrapper"] {
         background:
             linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018)),
-            var(--xai-panel);
-        border: 1px solid var(--xai-border);
+            var(--vision-panel);
+        border: 1px solid var(--vision-border);
         border-radius: 8px;
         box-shadow: 0 18px 45px rgba(0, 0, 0, 0.22);
     }
     div[data-testid="stFileUploader"] section {
         min-height: 150px;
-        border: 1px dashed var(--xai-border-strong);
+        border: 1px dashed var(--vision-border-strong);
         border-radius: 8px;
         background:
             linear-gradient(135deg, rgba(85, 215, 194, 0.08), rgba(242, 189, 107, 0.035)),
@@ -99,23 +99,23 @@ st.markdown(
     }
     div[data-testid="stFileUploader"] button:hover,
     div[data-testid="stButton"] button:hover {
-        border-color: var(--xai-teal);
-        color: var(--xai-text);
+        border-color: var(--vision-teal);
+        color: var(--vision-text);
     }
     div[data-testid="stTextInput"] input,
     div[data-testid="stSelectbox"] div[data-baseweb="select"] > div {
         background: rgba(7, 11, 15, 0.78);
         border-color: rgba(233, 238, 245, 0.14);
         border-radius: 7px;
-        color: var(--xai-text);
+        color: var(--vision-text);
     }
     div[data-testid="stSlider"] [role="slider"] {
-        background: var(--xai-teal);
-        border-color: var(--xai-teal);
+        background: var(--vision-teal);
+        border-color: var(--vision-teal);
         box-shadow: 0 0 0 4px rgba(85, 215, 194, 0.14);
     }
     div[data-testid="stProgress"] > div > div {
-        background: linear-gradient(90deg, var(--xai-teal), var(--xai-amber));
+        background: linear-gradient(90deg, var(--vision-teal), var(--vision-amber));
     }
     div[data-testid="stImage"] img {
         border-radius: 7px;
@@ -123,28 +123,28 @@ st.markdown(
     div[data-testid="stAlert"] {
         border-radius: 8px;
     }
-    .xai-kicker {
-        color: var(--xai-teal);
+    .vision-kicker {
+        color: var(--vision-teal);
         font-size: 0.78rem;
         font-weight: 760;
         letter-spacing: 0;
         text-transform: uppercase;
         margin-bottom: 0.4rem;
     }
-    .xai-subtitle {
-        color: var(--xai-muted);
+    .vision-subtitle {
+        color: var(--vision-muted);
         font-size: 1.02rem;
         line-height: 1.56;
         margin-bottom: 1.2rem;
         max-width: 720px;
     }
-    .xai-pill-row {
+    .vision-pill-row {
         display: flex;
         flex-wrap: wrap;
         gap: 0.5rem;
         margin: 0.85rem 0 1.25rem;
     }
-    .xai-pill {
+    .vision-pill {
         border: 1px solid rgba(233, 238, 245, 0.16);
         border-radius: 999px;
         color: rgba(244, 247, 251, 0.9);
@@ -153,25 +153,25 @@ st.markdown(
         font-size: 0.82rem;
         font-weight: 650;
     }
-    .xai-panel-title {
-        color: var(--xai-text);
+    .vision-panel-title {
+        color: var(--vision-text);
         font-size: 0.98rem;
         font-weight: 760;
         margin-bottom: 0.45rem;
     }
-    .xai-empty {
-        border: 1px solid var(--xai-border);
+    .vision-empty {
+        border: 1px solid var(--vision-border);
         border-radius: 8px;
         padding: 1.2rem;
-        color: var(--xai-muted);
+        color: var(--vision-muted);
         background: rgba(244, 247, 251, 0.035);
     }
-    .xai-score-label {
-        color: var(--xai-text);
+    .vision-score-label {
+        color: var(--vision-text);
         font-weight: 720;
     }
-    .xai-score-value {
-        color: var(--xai-muted);
+    .vision-score-value {
+        color: var(--vision-muted);
         text-align: right;
         font-weight: 650;
     }
@@ -194,19 +194,19 @@ def load_model(checkpoint_path: str):
     return model, checkpoint
 
 
-st.markdown('<div class="xai-kicker">Explainable vision demo</div>', unsafe_allow_html=True)
+st.markdown('<div class="vision-kicker">Explainable vision demo</div>', unsafe_allow_html=True)
 st.title("Explainable Vision Demo")
 st.markdown(
-    '<div class="xai-subtitle">A clean inspection workspace for local image classifiers, '
+    '<div class="vision-subtitle">A clean inspection workspace for local image classifiers, '
     "top-class confidence, and GradCAM or attention-rollout review.</div>",
     unsafe_allow_html=True,
 )
 st.markdown(
     """
-    <div class="xai-pill-row">
-        <span class="xai-pill">Local checkpoint</span>
-        <span class="xai-pill">Classification</span>
-        <span class="xai-pill">GradCAM / Rollout</span>
+    <div class="vision-pill-row">
+        <span class="vision-pill">Local checkpoint</span>
+        <span class="vision-pill">Classification</span>
+        <span class="vision-pill">GradCAM / Rollout</span>
     </div>
     """,
     unsafe_allow_html=True,
@@ -215,7 +215,7 @@ st.markdown(
 upload_col, filter_col = st.columns([0.62, 0.38], gap="large", vertical_alignment="top")
 with upload_col:
     with st.container(border=True):
-        st.markdown('<div class="xai-panel-title">Image</div>', unsafe_allow_html=True)
+        st.markdown('<div class="vision-panel-title">Image</div>', unsafe_allow_html=True)
         uploaded = st.file_uploader(
             "Upload image",
             type=["jpg", "jpeg", "png", "webp"],
@@ -224,7 +224,7 @@ with upload_col:
 
 with filter_col:
     with st.container(border=True):
-        st.markdown('<div class="xai-panel-title">Model</div>', unsafe_allow_html=True)
+        st.markdown('<div class="vision-panel-title">Model</div>', unsafe_allow_html=True)
         checkpoint_path = st.text_input("Checkpoint", "runs/surface_resnet18/best_model.pt")
         top_predictions = st.slider("Top predictions", min_value=1, max_value=10, value=5)
         heatmap_alpha = st.slider("Heatmap opacity", min_value=0.15, max_value=0.75, value=0.42)
@@ -233,14 +233,14 @@ with filter_col:
 
 if not Path(checkpoint_path).exists():
     st.markdown(
-        '<div class="xai-empty">Enter a valid checkpoint path to start inference.</div>',
+        '<div class="vision-empty">Enter a valid checkpoint path to start inference.</div>',
         unsafe_allow_html=True,
     )
     st.stop()
 
 if uploaded is None:
     st.markdown(
-        '<div class="xai-empty">Waiting for an image.</div>',
+        '<div class="vision-empty">Waiting for an image.</div>',
         unsafe_allow_html=True,
     )
     st.stop()
@@ -312,11 +312,11 @@ with st.container(border=True):
     for rank, row in score_table.head(top_count).iterrows():
         label_col, score_col = st.columns([0.78, 0.22], vertical_alignment="center")
         label_col.markdown(
-            f'<div class="xai-score-label">{rank + 1}. {row["class"]}</div>',
+            f'<div class="vision-score-label">{rank + 1}. {row["class"]}</div>',
             unsafe_allow_html=True,
         )
         score_col.markdown(
-            f'<div class="xai-score-value">{row["probability"]:.2%}</div>',
+            f'<div class="vision-score-value">{row["probability"]:.2%}</div>',
             unsafe_allow_html=True,
         )
         st.progress(min(max(float(row["probability"]), 0.0), 1.0))
