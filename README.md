@@ -1,6 +1,6 @@
-# Explainable Object Detection / Classification Demo
+# Explainable Image Classification Demo
 
-An end-to-end computer vision demo for image classification with explainability. The repo uses a transfer-learning-ready ResNet18/EfficientNet pipeline, reproducible dataset splits, accuracy/AUC/classification-mAP evaluation, GradCAM visualizations, and a small Streamlit UI for interactive inference.
+An end-to-end computer vision demo for image classification with explainability. The repo uses a transfer-learning-ready ResNet18/EfficientNet pipeline, reproducible dataset splits, accuracy/AUC/classification average precision, GradCAM visualizations, and a small Streamlit UI for interactive inference.
 
 The included sample dataset generator creates a tiny synthetic surface-inspection dataset so the full workflow can run without external data. The same training and evaluation code also works with any ImageFolder-style dataset.
 
@@ -137,7 +137,7 @@ The evaluator reports:
 
 - The bundled dataset is intentionally synthetic and small; use a real domain dataset before drawing product conclusions.
 - GradCAM is a localization aid, not a proof of causal reasoning.
-- Object detection is not implemented in this repo. A YOLO variant could be added with bounding-box labels and detection mAP.
+- Object detection is a natural next extension, but it is intentionally out of scope for this version. A YOLO or RT-DETR path would need bounding-box labels, detection metrics, and its own explanation workflow.
 - The checkpoint Streamlit UI still expects a local model file; model registry or cloud deployment integration would be the next production step.
 - The pretrained ImageNet demo is intentionally broad and lightweight. It is good for showing the explanation loop, not for validating a domain model.
 - Add calibration metrics, test-time augmentation, and failure-case galleries for a stronger model audit.
