@@ -245,9 +245,11 @@ if uploaded is None:
     )
     st.stop()
 
-with st.spinner("Loading model and generating GradCAM..."):
+with st.spinner("Loading model and preparing explanation..."):
     model, checkpoint = load_model(checkpoint_path)
     arch = checkpoint["arch"]
+    uses_attention_rollout = is_vit_arch(arch)
+    explanation_title = "Attention Rollout" if uses_attention_rollout else "GradCAM"
     class_names = checkpoint["class_names"]
     image = Image.open(uploaded).convert("RGB")
     transform = build_transforms(checkpoint["image_size"], train=False)
@@ -270,11 +272,11 @@ target_options = {
     for _, row in score_table.head(top_count).iterrows()
 }
 with target_slot.container():
-    selected_target = st.selectbox("GradCAM target", list(target_options))
+    selected_target = st.selectbox("Explanation target", list(target_options))
 target_class = target_options[selected_target]
 
 with st.spinner("Rendering explanation..."):
-    if is_vit_arch(arch):
+    if uses_attention_rollout:
         heatmap = attention_rollout_heatmap(model, image_tensor)
     else:
         try:
@@ -282,7 +284,7 @@ with st.spinner("Rendering explanation..."):
         except ValueError:
             st.error(
                 "This checkpoint can run classification, but the UI currently supports "
-                "GradCAM for CNNs and attention rollout for ViT checkpoints."
+                "GradCAM for CNNs and attention rollout for ViT-B/16 checkpoints."
             )
             st.stop()
         gradcam = GradCAM(model, target_layer)
@@ -304,7 +306,7 @@ with left:
         st.image(image, use_container_width=True)
 with right:
     with st.container(border=True):
-        st.subheader("GradCAM")
+        st.subheader(explanation_title)
         st.image(overlay, use_container_width=True)
 
 with st.container(border=True):

@@ -178,11 +178,15 @@ the model audit includes a transformer-native explanation artifact alongside the
 classification metrics. The companion `app/transformer_attention_lab.py` dashboard presents
 those artifacts as a reviewer-friendly experiment report.
 
+Swin-T is included as a transformer classification baseline; attention rollout is currently
+implemented for ViT-B/16 only.
+
 ## Limitations And Next Steps
 
 - The bundled dataset is intentionally small and illustrative; use a real domain dataset before drawing product conclusions.
 - GradCAM is a localization aid, not a proof of causal reasoning.
 - ViT attention rollout is attention-based attribution, not Shapley-value attribution; it is useful for inspection but should be paired with quantitative error analysis.
+- Swin-T is supported for training and classification, while transformer rollout is currently limited to ViT-B/16.
 - Object detection is a natural next extension, but it is intentionally out of scope for this version. A YOLO or RT-DETR path would need bounding-box labels, detection metrics, and its own explanation workflow.
 - The checkpoint Streamlit UI still expects a local model file; model registry or cloud deployment integration would be the next production step.
 - The pretrained ImageNet demo is intentionally broad and lightweight. It is good for showing the explanation loop, not for validating a domain model.

@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "explainable-vision-demo"
 version = "0.1.0"
-description = "Explainable image classification demo with ResNet/EfficientNet, evaluation metrics, GradCAM, and Streamlit."
+description = "Explainable image classification demo with CNN/transformer models, GradCAM, ViT attention rollout, evaluation metrics, and Streamlit dashboards."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
