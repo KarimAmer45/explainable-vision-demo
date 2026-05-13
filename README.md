@@ -12,6 +12,10 @@ The included sample dataset generator creates a tiny synthetic surface-inspectio
 
 ![Streamlit UI](docs/screenshots/streamlit_ui.png)
 
+![ImageNet GradCAM upload screen](docs/screenshots/imagenet_gradcam_upload.png)
+
+![ImageNet GradCAM working result](docs/screenshots/imagenet_gradcam_result.png)
+
 ## What This Demonstrates
 
 - Reproducible image dataset discovery and stratified `train` / `val` / `test` splitting.
@@ -75,11 +79,35 @@ python -m xai_vision_demo.explain \
   --output runs/surface_resnet18/gradcam_crack.png
 ```
 
-Launch the UI:
+Launch the trained-checkpoint UI:
 
 ```bash
 streamlit run app/streamlit_app.py
 ```
+
+Or try the small pretrained ImageNet GradCAM demo without training a local model first:
+
+```bash
+streamlit run app/imagenet_gradcam_demo.py
+```
+
+This one is meant to be a quick inspection surface. It downloads torchvision's pretrained
+ResNet18 weights the first time they are needed, then lets you upload a photo or use the
+built-in coffee mug sample. From there you can change the number of predictions shown,
+adjust the heatmap opacity, and pick which predicted class GradCAM should explain.
+
+Under the hood, the demo preprocesses the image with the same transforms shipped with the
+ResNet18 weights, runs a normal forward pass for class probabilities, then hooks the last
+ResNet block for GradCAM. The selected class score is backpropagated into that block, the
+gradients weight the activation maps, and the resulting heatmap is blended over the input
+crop. In plain English: it shows the patch of the image the model leaned on most for the
+class you selected.
+
+The useful caveat: this is not the trained surface-inspection model. It is ImageNet
+ResNet18, so it is best for everyday objects like mugs, dogs, cars, guitars, and fruit.
+It will happily produce a heatmap for a defect image, but that does not mean the model
+understands defects. GradCAM is also coarse; it is a debugging clue, not proof that the
+model "reasoned" correctly.
 
 ## Dataset Format
 
@@ -110,5 +138,6 @@ The evaluator reports:
 - The bundled dataset is intentionally synthetic and small; use a real domain dataset before drawing product conclusions.
 - GradCAM is a localization aid, not a proof of causal reasoning.
 - Object detection is not implemented in this repo. A YOLO variant could be added with bounding-box labels and detection mAP.
-- The Streamlit UI loads a local checkpoint only; model registry or cloud deployment integration would be the next production step.
+- The checkpoint Streamlit UI still expects a local model file; model registry or cloud deployment integration would be the next production step.
+- The pretrained ImageNet demo is intentionally broad and lightweight. It is good for showing the explanation loop, not for validating a domain model.
 - Add calibration metrics, test-time augmentation, and failure-case galleries for a stronger model audit.
