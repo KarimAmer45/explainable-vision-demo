@@ -1,4 +1,4 @@
-# Explainable Object Detection / Classification Demo
+# Explainable Image Classification Demo
 
 An end-to-end computer vision demo for image classification with explainability. The repo uses a transfer-learning-ready ResNet18/EfficientNet pipeline, reproducible dataset splits, accuracy/AUC/classification-mAP evaluation, GradCAM visualizations, and a small Streamlit UI for interactive inference.
 
