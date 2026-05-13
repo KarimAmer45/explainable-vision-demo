@@ -94,15 +94,16 @@ Run a small public-dataset transformer experiment:
 ```bash
 python -m xai_vision_demo.transformer_experiment \
   --arch vit_b_16 \
-  --output-dir runs/cifar10_vit_b_16 \
-  --epochs 2 \
-  --max-train-samples 2000 \
-  --max-val-samples 500 \
-  --max-test-samples 500
+  --classes airplane ship \
+  --output-dir runs/cifar10_vit_airship \
+  --epochs 3 \
+  --max-train-samples 1000 \
+  --max-val-samples 200 \
+  --max-test-samples 200
 ```
 
 That command downloads CIFAR-10 through `torchvision`, fine-tunes a pretrained ViT-B/16
-classification head by default, writes `best_model.pt`, `metrics_history.json`,
+classification head on a focused airplane-vs-ship public benchmark, writes `best_model.pt`, `metrics_history.json`,
 `test_metrics.json`, `run_config.json`, `experiment_card.md`, `training_curves.png`,
 and saves `attention_rollout_example.png`.
 Use `--arch swin_t` for a Swin-T classification baseline, or `--no-freeze-backbone`
@@ -171,8 +172,8 @@ The evaluator reports:
 
 The `xai_vision_demo.transformer_experiment` module is a compact public-dataset run for
 showing the repo is not limited to CNN GradCAM. It uses CIFAR-10 as a reproducible public
-dataset, supports `vit_b_16` and `swin_t`, and keeps the default settings intentionally
-small enough for a portfolio demo. The ViT path exports an attention-rollout overlay so
+dataset, supports `vit_b_16` and `swin_t`, and can be scoped to focused class pairs such
+as airplane-vs-ship for a crisp, high-signal portfolio demo. The ViT path exports an attention-rollout overlay so
 the model audit includes a transformer-native explanation artifact alongside the usual
 classification metrics. The companion `app/transformer_attention_lab.py` dashboard presents
 those artifacts as a reviewer-friendly experiment report.

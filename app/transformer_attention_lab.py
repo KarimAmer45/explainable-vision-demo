@@ -181,8 +181,8 @@ def metric_card(label: str, value: float | int | str) -> str:
 st.markdown('<div class="xai-kicker">Transformer experiment</div>', unsafe_allow_html=True)
 st.title("Transformer Attention Lab")
 st.markdown(
-    '<div class="xai-subtitle">A compact model-audit surface for the CIFAR-10 ViT/Swin '
-    "experiment, with metric cards, run provenance, and a transformer-native attention "
+    '<div class="xai-subtitle">A focused model-audit surface for a CIFAR-10 airplane-vs-ship '
+    "ViT experiment, with metric cards, run provenance, and a transformer-native attention "
     "rollout artifact.</div>",
     unsafe_allow_html=True,
 )
@@ -190,7 +190,7 @@ st.markdown(
     """
     <div class="xai-pill-row">
         <span class="xai-pill">CIFAR-10</span>
-        <span class="xai-pill">ViT / Swin</span>
+        <span class="xai-pill">Airplane vs ship</span>
         <span class="xai-pill">Attention rollout</span>
     </div>
     """,
@@ -201,7 +201,7 @@ control_col, summary_col = st.columns([0.38, 0.62], gap="large", vertical_alignm
 with control_col:
     with st.container(border=True):
         st.markdown('<div class="xai-panel-title">Run Directory</div>', unsafe_allow_html=True)
-        run_dir_text = st.text_input("Run directory", "runs/cifar10_vit_smoke")
+        run_dir_text = st.text_input("Run directory", "runs/cifar10_vit_airship")
         run_dir = (ROOT / run_dir_text).resolve()
         st.caption(str(run_dir))
 
@@ -212,11 +212,12 @@ with summary_col:
             """
             <div class="xai-command">python -m xai_vision_demo.transformer_experiment ^
   --arch vit_b_16 ^
-  --output-dir runs/cifar10_vit_smoke ^
-  --epochs 1 ^
-  --max-train-samples 100 ^
-  --max-val-samples 50 ^
-  --max-test-samples 50</div>
+  --classes airplane ship ^
+  --output-dir runs/cifar10_vit_airship ^
+  --epochs 3 ^
+  --max-train-samples 1000 ^
+  --max-val-samples 200 ^
+  --max-test-samples 200</div>
             """,
             unsafe_allow_html=True,
         )

@@ -6,12 +6,12 @@ from pathlib import Path
 from time import perf_counter
 
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageDraw
 import torch
 import torch.nn as nn
 from sklearn.model_selection import train_test_split
 from torch.optim import AdamW
-from torch.utils.data import DataLoader, Dataset, Subset
+from torch.utils.data import DataLoader, Dataset
 from torchvision import datasets
 
 from xai_vision_demo.data import build_transforms
@@ -22,17 +22,26 @@ from xai_vision_demo.train import run_epoch, save_training_plot, set_seed
 from xai_vision_demo.transformer_explain import attention_rollout_heatmap
 
 
-class DatasetWithIds(Dataset):
-    def __init__(self, dataset: Dataset, prefix: str):
+class CifarSubsetWithIds(Dataset):
+    def __init__(
+        self,
+        dataset: Dataset,
+        indices: list[int],
+        label_map: dict[int, int],
+        prefix: str,
+    ):
         self.dataset = dataset
+        self.indices = indices
+        self.label_map = label_map
         self.prefix = prefix
 
     def __len__(self) -> int:
-        return len(self.dataset)
+        return len(self.indices)
 
     def __getitem__(self, index: int) -> tuple[torch.Tensor, int, str]:
-        image, label = self.dataset[index]
-        return image, int(label), f"{self.prefix}:{index}"
+        source_index = self.indices[index]
+        image, label = self.dataset[source_index]
+        return image, self.label_map[int(label)], f"{self.prefix}:{source_index}"
 
 
 def parse_args() -> argparse.Namespace:
@@ -42,6 +51,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-dir", default="runs/cifar10_vit_b_16")
     parser.add_argument("--data-dir", default="data/public")
     parser.add_argument("--arch", choices=["vit_b_16", "swin_t"], default="vit_b_16")
+    parser.add_argument(
+        "--classes",
+        nargs="+",
+        default=None,
+        help="Optional CIFAR-10 class names to keep, for example: --classes airplane ship",
+    )
     parser.add_argument("--epochs", type=int, default=2)
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--image-size", type=int, default=224)
@@ -91,22 +106,34 @@ def make_cifar10_loaders(
     seed: int,
     num_workers: int,
     download: bool,
-) -> tuple[dict[str, DataLoader], list[str], dict[str, list[int]]]:
+    selected_classes: list[str] | None,
+) -> tuple[dict[str, DataLoader], list[str], dict[str, list[int]], dict[int, int]]:
     train_raw = datasets.CIFAR10(root=data_dir, train=True, download=download)
     test_raw = datasets.CIFAR10(root=data_dir, train=False, download=download)
-    class_names = list(train_raw.classes)
+    base_class_names = list(train_raw.classes)
+    if selected_classes:
+        unknown = sorted(set(selected_classes) - set(base_class_names))
+        if unknown:
+            raise ValueError(f"Unknown CIFAR-10 class names: {unknown}")
+        class_names = selected_classes
+    else:
+        class_names = base_class_names
+    selected_labels = [base_class_names.index(class_name) for class_name in class_names]
+    label_map = {source_label: target_label for target_label, source_label in enumerate(selected_labels)}
 
     train_labels = np.asarray(train_raw.targets)
     test_labels = np.asarray(test_raw.targets)
+    train_candidates = np.flatnonzero(np.isin(train_labels, selected_labels))
+    test_candidates = np.flatnonzero(np.isin(test_labels, selected_labels))
     train_indices, val_indices = train_test_split(
-        np.arange(len(train_labels)),
+        train_candidates,
         test_size=val_size,
-        stratify=train_labels,
+        stratify=train_labels[train_candidates],
         random_state=seed,
     )
     train_indices = stratified_limit(train_indices, train_labels, max_train_samples, seed)
     val_indices = stratified_limit(val_indices, train_labels, max_val_samples, seed)
-    test_indices = stratified_limit(np.arange(len(test_labels)), test_labels, max_test_samples, seed)
+    test_indices = stratified_limit(test_candidates, test_labels, max_test_samples, seed)
 
     train_dataset = datasets.CIFAR10(
         root=data_dir,
@@ -129,21 +156,21 @@ def make_cifar10_loaders(
 
     loaders = {
         "train": DataLoader(
-            DatasetWithIds(Subset(train_dataset, train_indices), "cifar10-train"),
+            CifarSubsetWithIds(train_dataset, train_indices, label_map, "cifar10-train"),
             batch_size=batch_size,
             shuffle=True,
             num_workers=num_workers,
             pin_memory=torch.cuda.is_available(),
         ),
         "val": DataLoader(
-            DatasetWithIds(Subset(eval_train_dataset, val_indices), "cifar10-val"),
+            CifarSubsetWithIds(eval_train_dataset, val_indices, label_map, "cifar10-val"),
             batch_size=batch_size,
             shuffle=False,
             num_workers=num_workers,
             pin_memory=torch.cuda.is_available(),
         ),
         "test": DataLoader(
-            DatasetWithIds(Subset(test_dataset, test_indices), "cifar10-test"),
+            CifarSubsetWithIds(test_dataset, test_indices, label_map, "cifar10-test"),
             batch_size=batch_size,
             shuffle=False,
             num_workers=num_workers,
@@ -154,7 +181,31 @@ def make_cifar10_loaders(
         "train": train_indices,
         "val": val_indices,
         "test": test_indices,
-    }
+    }, label_map
+
+
+def save_rollout_card(
+    image: Image.Image,
+    overlay: Image.Image,
+    output_path: Path,
+    true_class: str,
+    predicted_class: str,
+    confidence: float,
+) -> None:
+    canvas = Image.new("RGB", (1180, 640), "#080b0e")
+    draw = ImageDraw.Draw(canvas)
+    draw.text((42, 34), "ViT attention rollout", fill="#55d7c2")
+    draw.text((42, 72), f"{true_class} -> {predicted_class} ({confidence:.1%})", fill="#f4f7fb")
+    draw.text((42, 108), "Original", fill="#d7dee8")
+    draw.text((620, 108), "Attention overlay", fill="#d7dee8")
+
+    original = image.resize((500, 500), Image.Resampling.BICUBIC)
+    rollout = overlay.resize((500, 500), Image.Resampling.BICUBIC)
+    canvas.paste(original, (42, 136))
+    canvas.paste(rollout, (620, 136))
+    draw.rounded_rectangle((42, 136, 542, 636), radius=8, outline="#2c353d", width=2)
+    draw.rounded_rectangle((620, 136, 1120, 636), radius=8, outline="#55d7c2", width=2)
+    canvas.save(output_path)
 
 
 def save_attention_rollout_example(
@@ -163,6 +214,8 @@ def save_attention_rollout_example(
     output_path: Path,
     image_size: int,
     test_indices: list[int],
+    label_map: dict[int, int],
+    class_names: list[str],
     device: torch.device,
     discard_ratio: float,
 ) -> None:
@@ -170,15 +223,39 @@ def save_attention_rollout_example(
         return
 
     raw_test = datasets.CIFAR10(root=data_dir, train=False, download=False)
-    image, _label = raw_test[test_indices[0]]
+    transform = build_transforms(image_size=image_size, train=False)
+    best: tuple[float, int, Image.Image, int, int] | None = None
+    fallback: tuple[float, int, Image.Image, int, int] | None = None
+    with torch.no_grad():
+        for source_index in test_indices:
+            image, source_label = raw_test[source_index]
+            if not isinstance(image, Image.Image):
+                image = Image.fromarray(image)
+            label = label_map[int(source_label)]
+            image_tensor = transform(image).unsqueeze(0).to(device)
+            probabilities = torch.softmax(model(image_tensor), dim=1).squeeze(0)
+            confidence, predicted = probabilities.max(dim=0)
+            candidate = (float(confidence), source_index, image, label, int(predicted))
+            if fallback is None or candidate[0] > fallback[0]:
+                fallback = candidate
+            if int(predicted) == label and (best is None or candidate[0] > best[0]):
+                best = candidate
+
+    confidence, _source_index, image, label, predicted = best or fallback
     if not isinstance(image, Image.Image):
         image = Image.fromarray(image)
 
-    transform = build_transforms(image_size=image_size, train=False)
     image_tensor = transform(image).unsqueeze(0).to(device)
     heatmap = attention_rollout_heatmap(model, image_tensor, discard_ratio=discard_ratio)
     overlay = overlay_heatmap(image.resize((image_size, image_size)), heatmap)
-    overlay.save(output_path)
+    save_rollout_card(
+        image=image,
+        overlay=overlay,
+        output_path=output_path,
+        true_class=class_names[label],
+        predicted_class=class_names[predicted],
+        confidence=confidence,
+    )
 
 
 def save_experiment_card(
@@ -187,6 +264,9 @@ def save_experiment_card(
     test_metrics: dict[str, float | None],
     split_indices: dict[str, list[int]],
 ) -> None:
+    def render_metric(value: float | None) -> str:
+        return "n/a" if value is None else f"{value:.3f}"
+
     card = f"""# CIFAR-10 Transformer Experiment
 
 ## Setup
@@ -196,14 +276,15 @@ def save_experiment_card(
 - Pretrained weights: `{args.pretrained}`
 - Frozen backbone: `{args.freeze_backbone}`
 - Image size: `{args.image_size}`
+- CIFAR-10 classes: `{", ".join(args.classes or ["all"])}`
 - Train / validation / test samples: `{len(split_indices["train"])}` / `{len(split_indices["val"])}` / `{len(split_indices["test"])}`
 
 ## Test Metrics
 
-- Accuracy: `{test_metrics["accuracy"]:.3f}`
-- Macro ROC-AUC OVR: `{test_metrics["macro_auc_ovr"]:.3f}`
-- Macro average precision: `{test_metrics["macro_average_precision"]:.3f}`
-- Loss: `{test_metrics["loss"]:.3f}`
+- Accuracy: `{render_metric(test_metrics["accuracy"])}`
+- Macro ROC-AUC OVR: `{render_metric(test_metrics["macro_auc_ovr"])}`
+- Macro average precision: `{render_metric(test_metrics["macro_average_precision"])}`
+- Loss: `{render_metric(test_metrics["loss"])}`
 
 ## Explainability
 
@@ -229,7 +310,7 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
     data_dir = Path(args.data_dir)
 
-    loaders, class_names, split_indices = make_cifar10_loaders(
+    loaders, class_names, split_indices, label_map = make_cifar10_loaders(
         data_dir=data_dir,
         image_size=args.image_size,
         batch_size=args.batch_size,
@@ -240,6 +321,7 @@ def main() -> None:
         seed=args.seed,
         num_workers=args.num_workers,
         download=args.download,
+        selected_classes=args.classes,
     )
     (output_dir / "classes.json").write_text(json.dumps(class_names, indent=2), encoding="utf-8")
     (output_dir / "run_config.json").write_text(
@@ -298,6 +380,7 @@ def main() -> None:
                     "pretrained": args.pretrained,
                     "freeze_backbone": args.freeze_backbone,
                     "dataset": "CIFAR10",
+                    "source_class_names": class_names,
                     "split_indices": split_indices,
                 },
                 output_dir / "best_model.pt",
@@ -324,6 +407,8 @@ def main() -> None:
             output_path=output_dir / "attention_rollout_example.png",
             image_size=args.image_size,
             test_indices=split_indices["test"],
+            label_map=label_map,
+            class_names=class_names,
             device=device,
             discard_ratio=args.attention_discard_ratio,
         )

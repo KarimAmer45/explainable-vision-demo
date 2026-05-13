@@ -23,3 +23,21 @@ def test_classification_metrics_multiclass_are_bounded():
     assert 0.0 <= metrics["macro_auc_ovr"] <= 1.0
     assert metrics["macro_average_precision"] is not None
     assert 0.0 <= metrics["macro_average_precision"] <= 1.0
+
+
+def test_classification_metrics_binary_auc_and_average_precision_are_available():
+    y_true = np.array([0, 1, 0, 1])
+    y_prob = np.array(
+        [
+            [0.90, 0.10],
+            [0.20, 0.80],
+            [0.75, 0.25],
+            [0.30, 0.70],
+        ]
+    )
+
+    metrics = classification_metrics(y_true, y_prob, ["airplane", "ship"])
+
+    assert metrics["accuracy"] == 1.0
+    assert metrics["macro_auc_ovr"] == 1.0
+    assert metrics["macro_average_precision"] == 1.0

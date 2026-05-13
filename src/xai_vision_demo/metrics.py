@@ -33,6 +33,18 @@ def classification_metrics(
         "macro_auc_ovr": None,
         "macro_average_precision": None,
     }
+    if len(class_names) == 2:
+        try:
+            metrics["macro_auc_ovr"] = float(roc_auc_score(y_true, y_prob[:, 1]))
+        except ValueError:
+            metrics["macro_auc_ovr"] = None
+
+        try:
+            metrics["macro_average_precision"] = float(average_precision_score(y_true, y_prob[:, 1]))
+        except ValueError:
+            metrics["macro_average_precision"] = None
+        return metrics
+
     try:
         metrics["macro_auc_ovr"] = float(
             roc_auc_score(y_true_binary, y_prob, average="macro", multi_class="ovr")
