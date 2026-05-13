@@ -13,7 +13,8 @@ import torch
 import torch.nn.functional as F
 
 from xai_vision_demo.data import build_transforms
-from xai_vision_demo.model import create_model, gradcam_target_layer
+from xai_vision_demo.model import create_model, gradcam_target_layer, is_vit_arch
+from xai_vision_demo.transformer_explain import attention_rollout_heatmap
 
 
 class GradCAM:
@@ -82,21 +83,34 @@ def explain_image(
     image_path: str | Path,
     class_index: int | None = None,
     output_path: str | Path | None = None,
+    method: str = "auto",
+    discard_ratio: float = 0.0,
 ) -> tuple[Image.Image, dict[str, float]]:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model, checkpoint = load_checkpoint(checkpoint_path, device)
+    arch = checkpoint["arch"]
     transform = build_transforms(checkpoint["image_size"], train=False)
     image = Image.open(image_path).convert("RGB")
     image_tensor = transform(image).unsqueeze(0).to(device)
 
     with torch.no_grad():
         probs = torch.softmax(model(image_tensor), dim=1).squeeze(0).cpu().numpy()
-    target_layer = gradcam_target_layer(model, checkpoint["arch"])
-    gradcam = GradCAM(model, target_layer)
-    try:
-        heatmap = gradcam(image_tensor, class_index=class_index)
-    finally:
-        gradcam.close()
+    if method == "auto":
+        method = "attention-rollout" if is_vit_arch(arch) else "gradcam"
+
+    if method == "attention-rollout":
+        if not is_vit_arch(arch):
+            raise ValueError("Attention rollout is currently implemented for ViT checkpoints only.")
+        heatmap = attention_rollout_heatmap(model, image_tensor, discard_ratio=discard_ratio)
+    elif method == "gradcam":
+        target_layer = gradcam_target_layer(model, arch)
+        gradcam = GradCAM(model, target_layer)
+        try:
+            heatmap = gradcam(image_tensor, class_index=class_index)
+        finally:
+            gradcam.close()
+    else:
+        raise ValueError(f"Unsupported explanation method: {method}")
 
     resized_image = image.resize((checkpoint["image_size"], checkpoint["image_size"]))
     overlay = overlay_heatmap(resized_image, heatmap)
@@ -112,11 +126,13 @@ def explain_image(
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Create a GradCAM explanation for one image.")
+    parser = argparse.ArgumentParser(description="Create an explanation overlay for one image.")
     parser.add_argument("--checkpoint", required=True)
     parser.add_argument("--image", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--class-index", type=int)
+    parser.add_argument("--method", choices=["auto", "gradcam", "attention-rollout"], default="auto")
+    parser.add_argument("--discard-ratio", type=float, default=0.0)
     return parser.parse_args()
 
 
@@ -127,6 +143,8 @@ def main() -> None:
         image_path=args.image,
         class_index=args.class_index,
         output_path=args.output,
+        method=args.method,
+        discard_ratio=args.discard_ratio,
     )
     top_class, top_score = max(scores.items(), key=lambda item: item[1])
     print(f"Saved {args.output}. Top class: {top_class} ({top_score:.3f})")

@@ -1,6 +1,6 @@
 # Explainable Image Classification Demo
 
-An end-to-end computer vision demo for image classification with explainability. The repo uses a transfer-learning-ready ResNet18/EfficientNet pipeline, reproducible dataset splits, accuracy/AUC/classification average precision, GradCAM visualizations, and a small Streamlit UI for interactive inference.
+An end-to-end computer vision demo for image classification with explainability. The repo uses transfer-learning-ready CNN and transformer pipelines, reproducible dataset splits, accuracy/AUC/classification average precision, GradCAM and ViT attention-rollout visualizations, and a small Streamlit UI for interactive inference.
 
 The included sample dataset generator creates a tiny synthetic surface-inspection dataset so the full workflow can run without external data. The same training and evaluation code also works with any ImageFolder-style dataset.
 
@@ -16,14 +16,18 @@ The included sample dataset generator creates a tiny synthetic surface-inspectio
 
 ![ImageNet GradCAM working result](docs/screenshots/imagenet_gradcam_result.png)
 
+![Transformer attention lab](docs/screenshots/transformer_attention_lab.png)
+
 ## What This Demonstrates
 
 - Reproducible image dataset discovery and stratified `train` / `val` / `test` splitting.
 - ResNet18 or EfficientNet-B0 classification heads for transfer learning or scratch training.
+- ViT-B/16 and Swin-T classification heads for small transformer fine-tuning experiments.
 - Training loop with validation tracking, checkpointing, and learning-curve exports.
 - Evaluation with accuracy, macro ROC-AUC, and macro average precision as classification mAP.
 - GradCAM overlays that highlight image regions driving the predicted class.
-- Streamlit UI for uploading an image, viewing top predictions, and inspecting GradCAM.
+- ViT attention rollout that turns class-token attention into an image-space explanation map.
+- Streamlit UI for uploading an image, viewing top predictions, and inspecting GradCAM or ViT rollout.
 
 ## Quickstart
 
@@ -85,6 +89,31 @@ Launch the trained-checkpoint UI:
 streamlit run app/streamlit_app.py
 ```
 
+Run a small public-dataset transformer experiment:
+
+```bash
+python -m xai_vision_demo.transformer_experiment \
+  --arch vit_b_16 \
+  --output-dir runs/cifar10_vit_b_16 \
+  --epochs 2 \
+  --max-train-samples 2000 \
+  --max-val-samples 500 \
+  --max-test-samples 500
+```
+
+That command downloads CIFAR-10 through `torchvision`, fine-tunes a pretrained ViT-B/16
+classification head by default, writes `best_model.pt`, `metrics_history.json`,
+`test_metrics.json`, `run_config.json`, `experiment_card.md`, `training_curves.png`,
+and saves `attention_rollout_example.png`.
+Use `--arch swin_t` for a Swin-T classification baseline, or `--no-freeze-backbone`
+when you want full-model fine-tuning instead of a quick head-tuning pass.
+
+Review the transformer run as an interactive audit surface:
+
+```bash
+streamlit run app/transformer_attention_lab.py
+```
+
 Or try the small pretrained ImageNet GradCAM demo without training a local model first:
 
 ```bash
@@ -102,6 +131,11 @@ ResNet block for GradCAM. The selected class score is backpropagated into that b
 gradients weight the activation maps, and the resulting heatmap is blended over the input
 crop. In plain English: it shows the patch of the image the model leaned on most for the
 class you selected.
+
+For ViT checkpoints, the trained-checkpoint UI switches from GradCAM to attention rollout
+automatically. Attention rollout averages attention heads, adds the residual identity path,
+multiplies attention through the transformer blocks, and reshapes the class-token attention
+over image patches into a heatmap.
 
 The useful caveat: this is not the trained surface-inspection model. It is ImageNet
 ResNet18, so it is best for everyday objects like mugs, dogs, cars, guitars, and fruit.
@@ -133,10 +167,21 @@ The evaluator reports:
 - `macro_auc_ovr`: macro one-vs-rest ROC-AUC for multi-class classification.
 - `macro_average_precision`: macro average precision. This is the classification analogue of mAP and is useful when comparing ranked confidence scores.
 
+## Transformer Experiment
+
+The `xai_vision_demo.transformer_experiment` module is a compact public-dataset run for
+showing the repo is not limited to CNN GradCAM. It uses CIFAR-10 as a reproducible public
+dataset, supports `vit_b_16` and `swin_t`, and keeps the default settings intentionally
+small enough for a portfolio demo. The ViT path exports an attention-rollout overlay so
+the model audit includes a transformer-native explanation artifact alongside the usual
+classification metrics. The companion `app/transformer_attention_lab.py` dashboard presents
+those artifacts as a reviewer-friendly experiment report.
+
 ## Limitations And Next Steps
 
 - The bundled dataset is intentionally synthetic and small; use a real domain dataset before drawing product conclusions.
 - GradCAM is a localization aid, not a proof of causal reasoning.
+- ViT attention rollout is attention-based attribution, not Shapley-value attribution; it is useful for inspection but should be paired with quantitative error analysis.
 - Object detection is a natural next extension, but it is intentionally out of scope for this version. A YOLO or RT-DETR path would need bounding-box labels, detection metrics, and its own explanation workflow.
 - The checkpoint Streamlit UI still expects a local model file; model registry or cloud deployment integration would be the next production step.
 - The pretrained ImageNet demo is intentionally broad and lightweight. It is good for showing the explanation loop, not for validating a domain model.

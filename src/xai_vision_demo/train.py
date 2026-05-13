@@ -23,14 +23,14 @@ from xai_vision_demo.data import (
     write_split_csv,
 )
 from xai_vision_demo.metrics import classification_metrics
-from xai_vision_demo.model import create_model, freeze_backbone
+from xai_vision_demo.model import SUPPORTED_ARCHITECTURES, create_model, freeze_backbone
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Train an explainable image classifier.")
     parser.add_argument("--data-dir", required=True, help="ImageFolder dataset root.")
     parser.add_argument("--output-dir", required=True, help="Run directory for outputs.")
-    parser.add_argument("--arch", default="resnet18", choices=["resnet18", "efficientnet_b0"])
+    parser.add_argument("--arch", default="resnet18", choices=SUPPORTED_ARCHITECTURES)
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--image-size", type=int, default=224)
