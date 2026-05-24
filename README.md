@@ -191,3 +191,39 @@ implemented for ViT-B/16 only.
 - The checkpoint Streamlit UI still expects a local model file; model registry or cloud deployment integration would be the next production step.
 - The pretrained ImageNet demo is intentionally broad and lightweight. It is good for showing the explanation loop, not for validating a domain model.
 - Add calibration metrics, test-time augmentation, and failure-case galleries for a stronger model audit.
+
+---
+
+## Benchmarks (Live — May 2026)
+
+Run with the built-in public-dataset transformer experiment on CIFAR-10 (airplane vs ship), ViT-B/16, 3 epochs, head-only fine-tuning, 1 000 train / 200 val / 200 test samples. Results from `runs/cifar10_vit_airship/test_metrics.json`.
+
+| Metric | Value |
+|---|---|
+| Architecture | ViT-B/16 (pretrained ImageNet, head fine-tuned) |
+| Task | Binary classification — airplane vs ship (CIFAR-10) |
+| Training samples | 1 000 |
+| Test samples | 200 |
+| Epochs | 3 |
+| Test accuracy | 98.0 % |
+| Macro AUC-OvR | 0.9939 |
+| Macro average precision (mAP) | 0.9929 |
+| Test loss | 0.124 |
+| Explainability outputs | GradCAM overlay + ViT attention-rollout heatmap |
+
+Reproduce:
+
+```bash
+pip install -e .
+python -m vision_demo.transformer_experiment \
+  --arch vit_b_16 \
+  --classes airplane ship \
+  --output-dir runs/cifar10_vit_airship \
+  --epochs 3 \
+  --max-train-samples 1000 \
+  --max-val-samples 200 \
+  --max-test-samples 200
+cat runs/cifar10_vit_airship/test_metrics.json
+```
+
+**CV bullet (Google XYZ):** Accomplished 98% test accuracy (macro AUC 0.994, mAP 0.993) on a CIFAR-10 binary classification benchmark as measured by stratified held-out test evaluation, by fine-tuning a pretrained ViT-B/16 classification head on 1 000 samples with GradCAM and attention-rollout explainability overlays and a Streamlit inspection UI.
