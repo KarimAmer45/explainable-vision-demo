@@ -194,9 +194,9 @@ implemented for ViT-B/16 only.
 
 ---
 
-## Benchmarks (Live — May 2026)
+## Transformer Experiment Results
 
-Run with the built-in public-dataset transformer experiment on CIFAR-10 (airplane vs ship), ViT-B/16, 3 epochs, head-only fine-tuning, 1 000 train / 200 val / 200 test samples. Results from `runs/cifar10_vit_airship/test_metrics.json`.
+The following metrics are from the built-in CIFAR-10 experiment (airplane vs ship), ViT-B/16, 3 epochs, head-only fine-tuning, 1 000 train / 200 val / 200 test samples. Results from `runs/cifar10_vit_airship/test_metrics.json`.
 
 | Metric | Value |
 |---|---|
@@ -226,4 +226,3 @@ python -m vision_demo.transformer_experiment \
 cat runs/cifar10_vit_airship/test_metrics.json
 ```
 
-**CV bullet (Google XYZ):** Accomplished 98% test accuracy (macro AUC 0.994, mAP 0.993) on a CIFAR-10 binary classification benchmark as measured by stratified held-out test evaluation, by fine-tuning a pretrained ViT-B/16 classification head on 1 000 samples with GradCAM and attention-rollout explainability overlays and a Streamlit inspection UI.
